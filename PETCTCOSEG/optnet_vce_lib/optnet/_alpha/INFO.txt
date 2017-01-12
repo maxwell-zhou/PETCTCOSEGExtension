@@ -1,0 +1,7 @@
+This directory contains experimental, proof-of-concept
+algorithms/implementations.
+
+The data structures, class/function/variable names are
+subject to change.
+
+Stable codes will be moved to other directories.

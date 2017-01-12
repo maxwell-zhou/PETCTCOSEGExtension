@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<executable>
+  <category>Examples</category>
+  <title>PETCTCOSEG</title>
+  <description><![CDATA[This is a CLI module that can be bundled in an extension]]></description>
+  <version>0.0.1</version>
+  <documentation-url>http://github.com/llasion/PETCTCOSEGExtension</documentation-url>
+  <license>Slicer</license>
+  <contributor>Qi Song (University of Iowa), Junjie Bai (University of Iowa)</contributor>
+  <acknowledgements>This work was partially funded by NIH grant NXNNXXNNNNNN-NNXN</acknowledgements>
+   <parameters>
+    <label>IO</label>
+    <description><![CDATA[Input/output parameters]]></description>
+    <image>
+      <name>inputVolume_CT</name>
+      <label>Input Volume CT</label>
+      <channel>input</channel>
+      <index>0</index>
+      <description><![CDATA[Input volume CT]]></description>
+    </image>
+    <image>
+      <name>inputVolume_PET</name>
+      <label>Input Volume PET</label>
+      <channel>input</channel>
+      <index>1</index>
+      <description><![CDATA[PET image registered to CT image (withsame voxel spacing and image size)]]></description>
+    </image>
+    <image>
+      <name>inputVolume_OBJ</name>
+      <label>Input Volume OBJ</label>
+      <channel>input</channel>
+      <index>2</index>
+      <description><![CDATA[Object label seed image. A binary image containing only 1 and 0 intensities. All 1-voxels are definitely labeled as ‘object/foreground’ in segmentation. In this paper, one/multiple spheres (see ‘MultiSeeds’ field in configuration file explanation), where all voxels inside the spheres are 1, and all other voxels are 0.]]></description>
+    </image>
+    <image>
+      <name>inputVolume_BKG</name>
+      <label>Input Volume BKG</label>
+      <channel>input</channel>
+      <index>3</index>
+      <description><![CDATA[Background label seed image. A binary image with only 1 and 0 intensities. All 0-voxels (note it’s not 1-voxels!!!) are definitely labeled as ‘background’ in segmentation. In another word, the 1-voxels define a region which covers all tumor volumes. In this paper, a concentric larger sphere is used as bg seed for every ob seed sphere.]]></description>
+    </image>
+    <image>
+      <name>outputVolume_CTMP0</name>
+      <label>Output Volume CTMP0</label>
+      <channel>output</channel>
+      <index>4</index>
+      <description><![CDATA[Morphological operations are taken to ensure that only the largest connected component is kept in the final segmentation. Use this output segmentation if only one tumor volume is present in the image/ob seed image.]]></description>
+    </image>
+    <image>
+      <name>outputVolume_CTMP1</name>
+      <label>Output Volume CTMP1</label>
+      <channel>output</channel>
+      <index>5</index>
+      <description><![CDATA[No morphological operations are taken, keeping all connected components in final segmentation. Use this output segmentation if multiple tumor volumes are present in the image/ob seed image.]]></description>
+    </image>
+  </parameters>
+  <parameters>
+    <label>Parameters</label>
+    <description><![CDATA[Parameters for Segmentation]]></description>
+  <integer>
+    <name>flag_MultiSeeds</name>
+    <longflag>--flag_MultiSeeds</longflag>
+    <description><![CDATA[0/1 value.If 0, then morphological operations are taken to ensure that only the largest connected component is kept in the final segmentation. Use this value if only one tumor volume is present in the image/ob seed image. If 1, then no such morphological operations are taken, keeping all connected components in final segmentation. Use this value if multiple tumor volumes are present in the image/ob seed image.]]></description>
+    <label>flag_MultiSeeds</label>
+    <default>0</default>
+  </integer>  
+  <integer>
+    <name>with_Context</name>
+    <longflag>--with_Context</longflag>
+    <description><![CDATA[0/1 value. If 1, co-segmentation is making use of both PET and CT images for segmentation. You should always use this value if you want to run co-segmentation. If 0, no context information is enforced between PET and CT, resulting in independent tumor segmentations based only on one modality. This value is only used for debugging purposes, because it shows how independent segmentation, based on just PET, or based on just CT, looks like.]]></description>
+    <label>with_Context</label>
+    <default>0</default>
+  </integer>
+  <integer>
+    <name>Context_Coef</name>
+    <longflag>--Context_Coef</longflag>
+    <description><![CDATA[Multiplicative coefficient which controls how strong the PET-CT context constraints are. The larger the value is, the stronger it’s encouraged to have PET co-seg volume agree with CT co-seg volume. If set to extremely big value, this would effectively enforce PET co- seg volume to be the same as CT co-seg. This would be equivalent to performing a graph-cut segmentation on a fused PET-CT image. To make co-seg work best, you should set this value to a medium value, instead of extremely large or small values.]]></description>
+    <label>Context_Coef</label>
+    <default>1</default>
+  </integer>
+  <float>
+    <name>up_Thres</name>
+    <longflag>--up_Thres</longflag>
+    <description><![CDATA[Float value within range [0,1]. All PET intensities larger than SUVUpThres*maxPETIntnesity is set to a saturated PET region cost, indicating it’s very likely to be tumor. See paper for moredetails.]]></description>
+    <label>up_Thres</label>
+    <default>0.6</default>
+  </float>
+  <float>
+    <name>low_Thres</name>
+    <longflag>--low_Thres</longflag>
+    <description><![CDATA[Float value within range [0,1]. All PET intensities smaller than SUVLowThres*maxPETIntnesity is set to a saturated PET region cost, indicating it’s very likely to be not tumor. See paper for more details.]]></description>
+    <label>low_Thres</label>
+    <default>0.3</default>
+  </float>
+  </parameters>
+</executable>

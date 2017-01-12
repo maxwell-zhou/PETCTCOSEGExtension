@@ -1,0 +1,376 @@
+/*
+ ==========================================================================
+ |   
+ |   $Id: optnet_np_pseudoflow.hxx 21 2008-01-12 15:52:31Z Qi Song $
+ |
+ |   Written by Qi Song <qi-song@uiowa.edu>
+ |   Department of Electrical and Computer Engineering
+ |   University of Iowa
+ |   
+ ==========================================================================
+ |   This file is a part of the OptimalNet Pseudoflow library.
+ ==========================================================================
+ | Copyright (c) 2007-2008 Qi Song <qi-song@uiowa.edu>. All Rights Reserved.
+ | 
+ | This software is supplied under the terms of a license agreement or
+ | nondisclosure agreement  with the author  and may not be copied  or
+ | disclosed except in accordance with the terms of that agreement.
+ ==========================================================================
+
+ */
+
+#ifndef ___OPTNET_PSEUDOFLOW_HXX___
+#   define ___OPTNET_PSEUDOFLOW_HXX___
+
+#   if defined(_MSC_VER) && (_MSC_VER > 1000)
+#       pragma once
+#       pragma warning(disable: 4786)
+#       pragma warning(disable: 4284)
+#       pragma warning(disable: 4127)
+#   endif
+
+#   include <optnet/_alpha/graph_mc.hxx>
+#   if defined(_MSC_VER) && (_MSC_VER > 1000) && (_MSC_VER <= 1200)
+#       pragma warning(disable: 4018)
+#       pragma warning(disable: 4146)
+#   endif
+#   include <queue>
+////////////////////////////////////////////////////////////
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
+#include <iostream>
+#include <vector>
+
+
+namespace optnet {
+
+///////////////////////////////////////////////////////////////////////////
+///  @class optnet_mc_fs_maxflow
+///  @brief Implementation of the Boykov-Kolmogorov max-flow algorithm on
+///         a forward-star represented graph.
+///////////////////////////////////////////////////////////////////////////
+template <typename _Cap>
+class optnet_pseudoflow
+{
+    //typedef graph_mc<_Cap> _Base;
+
+public:
+ 
+	typedef _Cap  capacity_type;
+    //typedef typename _Base::difference_type     difference_type;
+    typedef int   size_type;
+	
+
+    ///////////////////////////////////////////////////////////////////////
+    /// Default constructor.
+    ///////////////////////////////////////////////////////////////////////
+    optnet_pseudoflow();
+
+    ///////////////////////////////////////////////////////////////////////
+    ///  Construct a optnet_mc_fs_maxflow object with the underlying graph
+    ///  being created according to the given size information.
+    ///
+    ///  @param  colsize  The number of nodes in a column.
+    ///  @param  numcols  The number of columns.
+    ///
+    ///////////////////////////////////////////////////////////////////////
+    //bySq optnet_pseudoflow(size_type colsize, size_type numcols);
+
+    ///////////////////////////////////////////////////////////////////////
+    ///  Construct a optnet_mc_fs_maxflow object with the underlying graph
+    ///  being created according to the given size information.
+    ///
+    ///  @param  colsize  The number of nodes in a column.
+    ///  @param  numcols  The number of columns.
+    ///
+    ///////////////////////////////////////////////////////////////////////
+    bool create(size_type size_x, size_type size_y, size_type size_z);
+
+	size_type size_0()
+	{
+		return m_x;
+	}
+
+	size_type size_1()
+	{
+		return m_y; 
+	}
+
+	size_type size_2()
+	{
+		return m_z;
+	}
+
+    ///////////////////////////////////////////////////////////////////////
+    ///  Solve the maximum-flow/minimum s-t cut problem.
+    ///
+    ///  @returns The maximum flow value.
+    ///////////////////////////////////////////////////////////////////////
+    capacity_type solve();
+	size_type nodes_per_column()
+	{
+   	return m_colsize;
+	}
+
+
+
+    ///////////////////////////////////////////////////////////////////////
+    ///  Add arc(s) connecting a node to the source and/or the sink node.
+    ///
+    ///  @param  s    The capacity of the arc from the source node.
+    ///  @param  t    The capacity of the arc to the sink node.
+    ///  @param  hi   The height-index of the node.
+    ///  @param  ci   The column-index of the node.
+    ///
+    ///////////////////////////////////////////////////////////////////////
+   void add_st_arc(capacity_type s, capacity_type t, size_type index_x, size_type index_y, size_type index_z);
+
+   void add_arc(size_type tail_x, size_type tail_y, size_type tail_z, size_type head_x, size_type head_y, size_type head_z);
+
+
+    ///////////////////////////////////////////////////////////////////////
+    ///  Add arc(s) connecting a node to the source and/or the sink node.
+    ///
+    ///  @param  s       The capacity of the arc from the source node.
+    ///  @param  t       The capacity of the arc to the sink node.
+    ///  @param  p_node  A pointer to the node.
+    ///
+    ///////////////////////////////////////////////////////////////////////
+   /*   
+	inline void add_st_arc(capacity_type s,
+                           capacity_type t,
+                           node_pointer  p_node
+                           )
+    {
+        assert(0 != p_node);
+        p_node->cap = s - t;
+        m_preflow += (s < t) ? s : t; // min(s, t)
+    }
+	*/
+
+    ///////////////////////////////////////////////////////////////////////
+    ///  Determines if the given node is in the source set of the cut.
+    ///
+    ///  @param  hi   The height-index of the node.
+    ///  @param  ci   The column-index of the node.
+    ///
+    ///  @return Returns true if the given node is the source set,
+    ///          false otherwise.
+    ///
+    ///////////////////////////////////////////////////////////////////////
+    bool in_source_set(size_type index_x, size_type index_y, size_type index_z);
+
+	/////////////////////////////////////////////////////////////////////////////
+	void initialize(void);
+	void freeMemory (void);
+/*   
+	{
+        return (!(m_nodes(hi, ci).tag & IS_SINK))
+            && (m_nodes(hi, ci).p_parent_arc != 0);
+    }
+	*/
+
+    ///////////////////////////////////////////////////////////////////////
+    ///  Determines if the given node is in the source set of the cut.
+    ///
+    ///  @param  p_node  A pointer to the node.
+    ///
+    ///  @return Returns true if the given node is the source set,
+    ///          false otherwise.
+    ///
+    ///////////////////////////////////////////////////////////////////////
+    /*By Sq
+	inline bool in_source_set(node_const_pointer p_node) const
+    {
+        return (!p_node->tag & IS_SINK)
+            && (p_node->p_parent_arc != 0);
+    }
+	*/
+
+    ///////////////////////////////////////////////////////////////////////
+    ///  Set the initial flow value.
+    ///
+    ///  @param flow The initial flow value.
+    ///
+    ///////////////////////////////////////////////////////////////////////
+    /*
+	inline void set_initial_flow(const capacity_type& flow)
+    {
+        m_preflow = flow;
+    }
+	*/
+
+private:
+	size_type m_colsize;
+	size_type m_numcols;
+	capacity_type m_flow;
+
+	size_type m_x;
+	size_type m_y;
+	size_type m_z;
+
+	float m_lambda;
+
+	//----------------------------------------------------
+	//---------------------------------------------------------------------------------------------------------
+	typedef long long int llint;
+
+ typedef struct node 
+   {
+	  int visited;
+	  int numAdjacent;
+	  int number;
+	  int label;
+	  capacity_type excess;
+	  struct node *parent;
+	  struct node *childList;
+	  struct node *nextScan;
+	  int numOutOfTree;
+	  Arc1 **outOfTree;
+	  int nextArc1;
+	  Arc1 *Arc1ToParent;
+	  struct node *next;
+	  struct node *prev;
+	  int breakpoint;
+    } Node;
+	
+	 typedef struct Arc1 
+   {
+	  struct node *from;
+	  struct node *to;
+	  capacity_type flow;
+	  capacity_type capacity;
+	  capacity_type direction;
+	  capacity_type *capacities;
+	  bool ispara;
+   } Arc1;
+
+   
+
+
+    typedef struct root 
+   {
+	 Node *start;
+	 Node *end;
+   } Root;
+
+	//---------------  Global variables ------------------
+    size_type numNodes;
+    long numArc1s;
+	long arcIndex;
+    size_type source;
+    size_type sink;
+    size_type numParams;
+
+    size_type highestStrongLabel;
+
+	size_type *labelCount;
+    Node *adjacencyList;
+    Root *strongRoots;
+
+	int *labelList;
+    
+   std::vector<Arc1>  Arc1List;
+//-----------------------------------------------------
+
+  
+     llint numPushes;
+     int numMergers;
+     int numRelabels;
+     int numGaps;
+     llint numArc1Scans;
+    
+     void prepareList();
+	 void initializeNode (Node *nd, size_type n);
+	 void initializeRoot (Root *rt);
+	 void freeRoot (Root *rt);
+	 void liftAll (Node *rootNode, size_type theparam);
+	 void addToStrongBucket (Node *newRoot, Node *rootEnd);
+	 void createOutOfTree (Node *nd);
+	 void initializeArc1 (Arc1 &ac);
+	 void addOutOfTreeNode (Node *n, Arc1 *out);
+	 void simpleInitialization (void);
+	 int addRelationship (Node *newParent, Node *child);
+	 void breakRelationship (Node *oldParent, Node *child);
+	 void merge (Node *parent, Node *child, Arc1 *newArc1);
+	 void pushUpward (Arc1 *currentArc1, Node *child, Node *parent, const int resCap);
+	 void pushDownward (Arc1 *currentArc1, Node *child, Node *parent, int flow);
+	 void pushExcess (Node *strongRoot);
+	 Arc1 *findWeakNode (Node *strongNode, Node **weakNode);
+	 void checkChildren (Node *curNode);
+	 void processRoot (Node *strongRoot);
+	 Node *getHighestStrongRoot (const int theparam);
+	 int computeMinCut (void);
+	 void pseudoflowPhase1 (void);
+	 void checkOptimality (void);
+	 void quickSort (Arc1 **arr, const int first, const int last);
+	 void sort (Node * current);
+	 void minisort (Node *current);
+	 void decompose (Node *excessNode, const int source, int *iteration);
+	 void recoverFlow (void);
+	 void displayBreakpoints (void);
+	 
+
+
+
+
+	 //
+
+	//
+   /*
+    typedef std::deque<node_pointer> node_queue;
+
+
+    void maxflow_init();
+    void maxflow_augment(node_pointer   p_s_start_node,
+                         node_pointer   p_t_start_node,
+                         capacity_type* p_mid_fwd_cap,
+                         capacity_type* p_mid_rev_cap);
+    void maxflow_adopt_source_orphan(node_pointer p_orphan);
+    void maxflow_adopt_sink_orphan(node_pointer p_orphan);
+
+    inline void activate(node_pointer p_node)
+    {
+        if (0 == (p_node->tag & IS_ACTIVE)) {  // Not active yet.
+            m_active_nodes.push_back(p_node);
+            p_node->tag |= IS_ACTIVE;
+        }
+    }
+
+    inline node_pointer neighbor_node_fwd(node_pointer    p_node,
+                                          difference_type shift)
+    {
+        return reinterpret_cast<node_pointer>
+                   (reinterpret_cast<char*>(p_node) + shift);
+    }
+    
+    inline node_pointer neighbor_node_rev(node_pointer    p_node,
+                                          difference_type shift)
+    {
+        return reinterpret_cast<node_pointer>
+                   (reinterpret_cast<char*>(p_node) - shift);
+    }
+
+    // Constants (Initialized in optnet_mc_fs_maxflow.cxx)
+    static const unsigned char       PARENT_REV;// Parent arc is reverse.
+    static const unsigned char       IS_ACTIVE; // The node is active.
+    static const unsigned char       IS_SINK;   // The node belongs to
+                                                //   the sink tree.
+    static forward_arc_const_pointer TERMINAL;  // Parent is terminal node.
+    static forward_arc_const_pointer ORPHAN;    // No parent.
+
+    size_type     m_dist_id;
+    node_queue    m_active_nodes, m_orphan_nodes;
+    capacity_type m_preflow, m_flow;
+	*/
+
+};
+
+} // namespace
+
+#   ifndef __OPTNET_SEPARATION_MODEL__
+#       include <optnet/_pseudo/optnet_np_pseudoflow.cxx>
+#   endif
+
+#endif
