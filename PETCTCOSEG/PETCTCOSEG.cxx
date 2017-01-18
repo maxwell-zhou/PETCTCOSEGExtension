@@ -30,13 +30,17 @@ int main(int argc, char* argv[]){
 	const char * inputCTFile = inputVolume_CT.c_str();
 	const char * inputPETFile = inputVolume_PET.c_str();
 	int flagMultiSeeds = flag_MultiSeeds;
-	int withContext = with_Context;
+	int withContext = 1;
 	int contextCoef = Context_Coef;
 	float upThres = up_Thres;
 	float lowThres = low_Thres;
 	const char * seedOb = inputVolume_OBJ.c_str();
 	const char * seedBg = inputVolume_BKG.c_str();	
-	
+	const char * datacost_ct = inputVolume_CT_cost.c_str();
+	const char * datacost_pet = inputVolume_PET_cost.c_str();
+	int useCost = User_Cost;
+
+
 	int numSurf_graphcut = 2;
 	
 	typedef ImageType3DFLOAT InputImageType;
@@ -107,10 +111,16 @@ int main(int argc, char* argv[]){
 	InternalImageType::IndexType index3D;
 
 	InternalImageType::Pointer costCTRegionImage, costPETRegionImage;
-
-	costPETRegionImage = ComputePETRegionCost<InputImageType, SeedImageType>( originPETImage, seedImage[0], upThres, lowThres);
-	costCTRegionImage = ComputeRegionCost<InternalImageType, SeedImageType>( scaleCTImage, seedImage[0]);
-	
+	if (useCost == 1)
+	{
+		costCTRegionImage = ImageIO.LoadImg< InternalImageType, InternalImageType::Pointer>( datacost_ct );
+		costPETRegionImage = ImageIO.LoadImg< InternalImageType, InternalImageType::Pointer>( datacost_pet );
+	}
+	else
+	{
+		costPETRegionImage = ComputePETRegionCost<InputImageType, SeedImageType>( originPETImage, seedImage[0], upThres, lowThres);
+		costCTRegionImage = ComputeRegionCost<InternalImageType, SeedImageType>( scaleCTImage, seedImage[0]);
+	}
 	
 	// ImageIO.WriteImg< InternalImageType >( costPETRegionImage,"costPETRegion.hdr" );
 	// ImageIO.WriteImg< InternalImageType >( costCTRegionImage,"costCTRegion.hdr" );
@@ -277,13 +287,19 @@ int main(int argc, char* argv[]){
 		}
 	}
     	
-	OutputImageType::Pointer morpImage[2];
+	OutputImageType::Pointer morpImage_CT[2];
 		
-	morpImage[0] = MorpSmooth< OutputImageType >( resultImage[0], seed, 0, 0, flagMultiSeeds );
-	morpImage[1] = MorpSmooth< OutputImageType >( resultImage[0], seed, 1, 1, flagMultiSeeds );
+	morpImage_CT[0] = MorpSmooth< OutputImageType >( resultImage[0], seed, 0, 0, flagMultiSeeds );
+	morpImage_CT[1] = MorpSmooth< OutputImageType >( resultImage[0], seed, 1, 1, flagMultiSeeds );
+
+	OutputImageType::Pointer morpImage_PET[2];
+		
+	morpImage_PET[0] = MorpSmooth< OutputImageType >( resultImage[1], seed, 0, 0, flagMultiSeeds );
+	morpImage_PET[1] = MorpSmooth< OutputImageType >( resultImage[1], seed, 1, 1, flagMultiSeeds );
 
 
 	string morpFileName[2];
+	
 /*
 	if ( withContext == 1 )
 	{
@@ -298,13 +314,26 @@ int main(int argc, char* argv[]){
 */
 
 //	add here
-	morpFileName[0] = outputVolume_CTMP0.c_str();
-	morpFileName[1] = outputVolume_CTMP1.c_str();
-	for ( int i = 0; i < 2; i++)
+	morpFileName[0] = outputVolume_CT.c_str();
+	morpFileName[1] = outputVolume_PET.c_str();
+
+	if (flagMultiSeeds == 0)
+	{
+	   ImageIO.WriteImg< OutputImageType >( morpImage_CT[0],morpFileName[0] );
+	   ImageIO.WriteImg< OutputImageType >( morpImage_PET[0],morpFileName[1] );
+	}
+	else
+	{
+	   ImageIO.WriteImg< OutputImageType >( morpImage_CT[1],morpFileName[0] );
+	   ImageIO.WriteImg< OutputImageType >( morpImage_PET[1],morpFileName[1] );
+	}
+	
+	/*for ( int i = 0; i < 2; i++)
 	{
       
-	   ImageIO.WriteImg< OutputImageType >( morpImage[i],morpFileName[i] );
-	}
+	   ImageIO.WriteImg< OutputImageType >( morpImage_CT[i],morpFileName_CT[i] );
+	   ImageIO.WriteImg< OutputImageType >( morpImage_PET[i],morpFileName_PET[i] );
+	}*/
 	
 
    return 0;
